@@ -1,7 +1,15 @@
+// Налаштування авторизації
+const API_URL = 'http://localhost:3000';
+let authToken = localStorage.getItem('token') || null;
+
+function setAuthHeader() {
+    return authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {};
+}
+
 // Функція для отримання всіх користувачів
 async function getUsers() {
     try {
-        const response = await axios.get('http://localhost:3000/users');
+        const response = await axios.get(`${API_URL}/users`, setAuthHeader());
         displayUsers(response.data);
     } catch (error) {
         console.error('Error receiving users:', error);
@@ -26,8 +34,8 @@ function displayUsers(users) {
 // Функція для показу деталей користувача
 async function showUserDetails(userId) {
     try {
-        const userResponse = await axios.get(`http://localhost:3000/users/${userId}`);
-        const friendsResponse = await axios.get(`http://localhost:3000/users/${userId}/friends`);
+        const userResponse = await axios.get(`${API_URL}/users/${userId}`, setAuthHeader());
+        const friendsResponse = await axios.get(`${API_URL}/users/${userId}/friends`, setAuthHeader());
         displayUserDetails(userResponse.data, friendsResponse.data);
     } catch (error) {
         console.error('Error receiving parts:', error);
@@ -52,17 +60,17 @@ function displayUserDetails(user, friends) {
 // Функція для додавання друга
 async function addFriend(userId) {
     try {
-        const allUsers = await axios.get('http://localhost:3000/users');
-        const friends = await axios.get(`http://localhost:3000/users/${userId}/friends`);
+        const allUsers = await axios.get(`${API_URL}/users`, setAuthHeader());
+        const friends = await axios.get(`${API_URL}/users/${userId}/friends`, setAuthHeader());
         const nonFriends = allUsers.data.filter(user => 
             user.id !== userId && !friends.data.some(friend => friend.id === user.id)
         );
 
         if (nonFriends.length > 0) {
-            const friendId = nonFriends[0].id; // Для простоти беремо першого
-            await axios.post(`http://localhost:3000/users/${userId}/friends`, { friendId });
+            const friendId = nonFriends[0].id;
+            await axios.post(`${API_URL}/users/${userId}/friends`, { friendId }, setAuthHeader());
             alert('Second one added!');
-            showUserDetails(userId); // Оновлюємо деталі
+            showUserDetails(userId);
         } else {
             alert('No users available to add.');
         }
@@ -74,18 +82,57 @@ async function addFriend(userId) {
 // Функція для видалення друга
 async function removeFriend(userId) {
     try {
-        const friends = await axios.get(`http://localhost:3000/users/${userId}/friends`);
+        const friends = await axios.get(`${API_URL}/users/${userId}/friends`, setAuthHeader());
         if (friends.data.length > 0) {
-            const friendId = friends.data[0].id; // Для простоти видаляємо першого
-            await axios.delete(`http://localhost:3000/users/${userId}/friends/${friendId}`);
+            const friendId = friends.data[0].id;
+            await axios.delete(`${API_URL}/users/${userId}/friends/${friendId}`, setAuthHeader());
             alert('The second one is deleted!');
-            showUserDetails(userId); // Оновлюємо деталі
+            showUserDetails(userId);
         } else {
             alert('User has no friends to delete.');
         }
     } catch (error) {
         console.error('Error deleting a friend:', error);
     }
+}
+
+// Аутентифікація
+async function register() {
+    const username = document.getElementById('auth-username').value;
+    const password = document.getElementById('auth-password').value;
+
+    if (!username || !password) return alert('Please enter username and password');
+
+    try {
+        await axios.post(`${API_URL}/auth/register`, { username, password });
+        alert('Registration successful. You can now login.');
+    } catch (error) {
+        alert('Registration failed: ' + error.response?.data?.message || error.message);
+    }
+}
+
+async function login() {
+    const username = document.getElementById('auth-username').value;
+    const password = document.getElementById('auth-password').value;
+
+    if (!username || !password) return alert('Please enter username and password');
+
+    try {
+        const response = await axios.post(`${API_URL}/auth/login`, { username, password });
+        authToken = response.data.token;
+        localStorage.setItem('token', authToken);
+        document.getElementById('auth-status').innerText = 'Logged in';
+        getUsers();
+    } catch (error) {
+        alert('Login failed: ' + error.response?.data?.message || error.message);
+    }
+}
+
+function logout() {
+    authToken = null;
+    localStorage.removeItem('token');
+    document.getElementById('auth-status').innerText = 'Logged out';
+    getUsers();
 }
 
 // Завантаження користувачів при запуску сторінки
