@@ -12,10 +12,24 @@
 <body>
     <div class="container">
         <h1 class="mt-5">Users and friends</h1>
-        <!-- Список користувачів -->
-        <div id="users-list" class="mt-4"></div>
-        <!-- Деталі користувача -->
-        <div id="user-details" class="mt-4"></div>
+    <!-- Аутентифікація -->
+    <div class="mt-4">
+         <h2>Authentication</h2>
+        <div class="mb-2">
+            <input type="text" id="auth-username" placeholder="Username" class="form-control">
+        </div>
+        <div class="mb-2">
+            <input type="password" id="auth-password" placeholder="Password" class="form-control">
+        </div>
+        <button class="btn btn-primary me-2" onclick="register()">Register</button>
+        <button class="btn btn-success me-2" onclick="login()">Login</button>
+        <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        <div id="auth-status" class="mt-2 text-success"></div>
+    </div>
+    <!-- Список користувачів -->
+    <div id="users-list" class="mt-4"></div>
+    <!-- Деталі користувача -->
+    <div id="user-details" class="mt-4"></div>
     </div>
     <!-- Підключення Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
